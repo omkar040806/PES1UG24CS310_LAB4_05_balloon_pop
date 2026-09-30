@@ -1,9 +1,10 @@
 """
 GameEngine: owns all balloons, spawns new ones, handles clicks,
-and manages the player's lives.
+and manages the player's lives and round timer.
 """
 
 import random
+import pygame
 
 from game.balloon import Balloon
 from game.click_detection import check_pop
@@ -11,6 +12,7 @@ from game.renderer import WIDTH, HEIGHT
 
 
 SPAWN_INTERVAL_FRAMES = 45
+ROUND_DURATION_SECONDS = 30
 
 
 class GameEngine:
@@ -20,6 +22,17 @@ class GameEngine:
         self.score = 0
         self.lives = 3
         self.game_over = False
+        self.start_time = pygame.time.get_ticks()
+        self.time_left = ROUND_DURATION_SECONDS
+
+    def restart(self):
+        self.balloons.clear()
+        self.frames_until_spawn = 0
+        self.score = 0
+        self.lives = 3
+        self.game_over = False
+        self.start_time = pygame.time.get_ticks()
+        self.time_left = ROUND_DURATION_SECONDS
 
     def _spawn_balloon(self):
         radius = random.randint(16, 44)
@@ -49,7 +62,7 @@ class GameEngine:
         popped = check_pop(self.balloons, pos)
 
         if popped is not None:
-            # Remove immediately so it cannot later count as a miss.
+            # Remove immediately so it cannot count as a miss.
             self.balloons.remove(popped)
 
             self.score += popped.points
@@ -57,6 +70,20 @@ class GameEngine:
 
     def update(self):
         if self.game_over:
+            return
+
+        elapsed_seconds = (
+            pygame.time.get_ticks() - self.start_time
+        ) / 1000
+
+        self.time_left = max(
+            0,
+            ROUND_DURATION_SECONDS - elapsed_seconds
+        )
+
+        if self.time_left <= 0:
+            self.time_left = 0
+            self.game_over = True
             return
 
         self.frames_until_spawn -= 1
@@ -73,7 +100,6 @@ class GameEngine:
             if balloon.is_past_bottom(HEIGHT):
                 missed_balloons.append(balloon)
 
-        # Every balloon that reaches the bottom costs one life.
         for balloon in missed_balloons:
             self.balloons.remove(balloon)
             self.lives -= 1
@@ -101,5 +127,16 @@ class GameEngine:
             (10, 40)
         )
 
+        renderer.draw_text(
+            surface,
+            font,
+            f"Time: {int(self.time_left)}",
+            (10, 70)
+        )
+
         if self.game_over:
-            renderer.draw_banner(surface, font, "Game Over")
+            renderer.draw_game_over(
+                surface,
+                font,
+                self.score
+            )
