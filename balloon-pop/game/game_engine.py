@@ -1,5 +1,6 @@
 """
-GameEngine: owns all balloons, spawns new ones, and handles clicks.
+GameEngine: owns all balloons, spawns new ones, handles clicks,
+and manages the player's lives.
 """
 
 import random
@@ -17,6 +18,8 @@ class GameEngine:
         self.balloons = []
         self.frames_until_spawn = 0
         self.score = 0
+        self.lives = 3
+        self.game_over = False
 
     def _spawn_balloon(self):
         radius = random.randint(16, 44)
@@ -40,35 +43,63 @@ class GameEngine:
         )
 
     def handle_click(self, pos):
+        if self.game_over:
+            return
+
         popped = check_pop(self.balloons, pos)
 
         if popped is not None:
+            # Remove immediately so it cannot later count as a miss.
             self.balloons.remove(popped)
+
             self.score += popped.points
             self.score = max(0, self.score)
 
     def update(self):
+        if self.game_over:
+            return
+
         self.frames_until_spawn -= 1
 
         if self.frames_until_spawn <= 0:
             self._spawn_balloon()
             self.frames_until_spawn = SPAWN_INTERVAL_FRAMES
 
-        for b in self.balloons:
-            b.update()
+        missed_balloons = []
 
-        self.balloons = [
-            b for b in self.balloons
-            if not b.is_past_bottom(HEIGHT)
-        ]
+        for balloon in self.balloons:
+            balloon.update()
+
+            if balloon.is_past_bottom(HEIGHT):
+                missed_balloons.append(balloon)
+
+        # Every balloon that reaches the bottom costs one life.
+        for balloon in missed_balloons:
+            self.balloons.remove(balloon)
+            self.lives -= 1
+
+        if self.lives <= 0:
+            self.lives = 0
+            self.game_over = True
 
     def draw(self, surface, font):
         from game import renderer
 
         renderer.draw_scene(surface, self.balloons)
+
         renderer.draw_text(
             surface,
             font,
             f"Score: {self.score}",
             (10, 10)
         )
+
+        renderer.draw_text(
+            surface,
+            font,
+            f"Lives: {self.lives}",
+            (10, 40)
+        )
+
+        if self.game_over:
+            renderer.draw_banner(surface, font, "Game Over")
