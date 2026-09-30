@@ -1,112 +1,67 @@
-# Balloon Pop Lab
+# Balloon Pop (Lab 4: Vibe Coding)
 
-This project is a single-topic Balloon Pop game using **Pygame**. It
-introduces students to size-aware click detection, entity variety, a
-lives/miss system, and round timing, using a small, readable
-object-oriented codebase.
+A Pygame Balloon Pop game. Balloons fall from the top of the screen and the
+player pops them with the mouse. This version fixes the original click-detection
+bug and adds balloon types, a lives system, and a timed round.
 
----
+## Requirements
 
-## What's Provided
+- Python 3.10+
+- Pygame
 
-A working Balloon Pop game with:
-
-- Balloons that spawn at the top at random sizes and fall toward the
-  bottom at random speeds
-- Clicking a balloon pops it and awards points; letting one fall past
-  the bottom is currently ignored
-- A running score display
-
-It has **one deliberate bug** and **three features** left for you to
-build. You are expected to **analyze**, **interact with an AI
-assistant**, and **complete/fix** the game to make it fully functional
-and more interesting.
-
-### **Use an LLM (e.g. ChatGPT or Claude) as your debugging and pair-programming partner for this lab.**
-
----
-
-## Getting Started
-
-### Setup
-
-1. Make sure you have Python 3.10+ installed.
-2. Install dependencies:
+## Setup and Run
 
 ```bash
+cd balloon-pop
 pip install -r requirements.txt
-```
-
-3. Run the game:
-
-```bash
 python main.py
 ```
 
-**Controls:** Left-click a balloon to pop it before it reaches the
-bottom.
+**Controls:** Left-click a balloon to pop it. Press **R** (or click the Restart
+button) on the Game Over screen to start a new round.
 
----
+## What Was Fixed
 
-## Tasks to Complete
+### Task 1: Click-detection bug
+`check_pop` in `game/click_detection.py` compared the *squared* distance from the
+click to the balloon center against the plain radius. Clicks only registered
+near the exact center. It now compares distance to the actual radius (or squared
+distance to `radius**2`), so a click anywhere inside the visible circle pops the
+balloon.
 
-Each task must be completed using an iterative process involving LLM
-suggestions and your critical code review.
+## Features Added
 
-### Task 1: Fix the click-detection bug
+### Task 2: Balloon types
 
-> A click is supposed to pop a balloon whenever it lands reasonably
-> close to that balloon's center - anywhere within its visible circle.
-> In the current build, `check_pop` (in `game/click_detection.py`)
-> computes the *squared* distance from the click to the balloon's
-> center, but compares it directly against the balloon's plain
-> (non-squared) `radius`. Squared distance grows much faster than
-> linear distance, so this comparison only succeeds when the click
-> lands within a few pixels of dead-center - anywhere close to the
-> visible edge of the balloon fails to register at all, even though it
-> clearly looks like a hit. Fix the check so it compares actual
-> distance to the balloon's actual radius.
+| Type    | Color         | Effect             |
+|---------|---------------|--------------------|
+| Normal  | [e.g. Red]    | [+10] points       |
+| Bonus   | [e.g. Gold]   | [+30] points       |
+| Penalty | Black         | [-20] points       |
 
-### Task 2: Implement different balloon types
+The score never drops below 0.
 
-> Introduce at least three balloon types: a normal balloon (regular
-> points), a bonus balloon (more points), and a penalty balloon (which
-> reduces the score, or has some other clearly defined negative
-> effect). Give each type its own color so they're easy to tell apart,
-> and make sure the correct effect happens when each type is popped.
+### Task 3: Lives system
+- The player starts with **3 lives**, shown on screen.
+- Any balloon that reaches the bottom without being popped costs **1 life**.
+  This applies to **all** balloon types, including penalty balloons.
+- Popping a balloon never costs a life, whatever its type.
+- The game ends when lives reach 0.
 
-### Task 3: Implement a lives/miss system
+### Task 4: Timed round
+- Each round lasts **30 seconds**, with the remaining time shown on screen.
+- The round ends when the timer hits 0 **or** lives hit 0, whichever comes first.
+- When the round ends, balloon spawning and clicks stop and the **final score**
+  is displayed.
+- Pressing **R** (or clicking Restart) starts a new round with the score, lives,
+  timer and balloons all reset.
 
-> Add 3 lives. Whenever a balloon reaches the bottom of the screen
-> without being popped, the player should lose a life. Display the
-> remaining lives, and end the game once they reach zero. Popping a
-> balloon should never cost a life, no matter its type.
+## Design Note
 
-### Task 4: Implement a timed round
-
-> Add a 30-second countdown for the round. Display the remaining time
-> on screen. Once it reaches zero (or lives run out, once Task 3 is
-> done), stop spawning and accepting balloons, show the final score
-> clearly, and provide a way to start a new round with the score,
-> lives, and timer all reset.
-
----
-
-## Expected Behavior
-
-- Clicking on a balloon should reliably pop it - not just when you
-  happen to click exactly on its center pixel. Test this by clicking
-  normally, the way you would in actual play, not by aiming with
-  pixel-perfect precision.
-- Balloon types are visually distinguishable and correctly affect the
-  score when popped.
-- Letting a balloon fall past the bottom costs a life; popping one
-  never does, regardless of type.
-- The round ends when time runs out or lives reach zero, whichever
-  comes first, with the final score shown clearly and a way to start
-  again.
-
----
+Penalty (black) balloons cost a life if they fall off the bottom, just like any
+other balloon, as the lab spec states. Popping them costs points but never a
+life. So the player must pop every balloon to keep their lives, but pop penalty
+balloons at the cost of score.
 
 ## Folder Structure
 
@@ -122,12 +77,13 @@ balloon-pop/
 └── README.md
 ```
 
----
+## Submission Contents (Lab-4 folder)
 
-## Submission Checklist
+- Before video: gameplay showing the click-detection bug
+- After video: gameplay showing the fix and all new features
+- Updated code
+- Chat history (link and PDF/doc export)
 
-Submission is only the following three things:
+## Tools Used
 
-- [ ] A 10-second video of gameplay **before** your changes, showing the bug/broken behavior
-- [ ] A 10-second video of gameplay **after** your changes, showing the bug fixed and the new features working
-- [ ] The Chat/LLM used page link, with the complete chat history
+- ChatGPT, for debugging and feature development through iterative prompting
